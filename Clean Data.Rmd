@@ -1,0 +1,55 @@
+---
+title: "Clean"
+author: "Joshua Berry"
+date: "1/25/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(readr)
+library(foreign)
+library(haven)
+library(tidyverse)
+library(readxl)
+library(memisc)
+library(rstanarm)
+library(ggridges)
+library(gtsummary)
+library(broom.mixed)
+library(gt)
+```
+
+## R Markdown
+
+```{r}
+anes_2016 <- 
+read_sav("anes_timeseries_2016.sav") %>%
+  as_factor() %>%
+  select(V161008, V161009, V162005, V162004, 
+         V162003, V162002, V162159, V161270, V161267x,V161310x, V161155) %>%
+  rename(V161008 = days_watched_media, V161009 = attention_to_media, 
+         V162005 = newspaper_count, V162004 = internet_count, 
+         V162003 = radio_count, V162002 = tv_count, 
+         V162159 = china_mil_threat, V161270 = education, V161267x = age, 
+         V161310x = race, V161155 = party_id) %>%
+  mutate(year = 2016) %>%
+  mutate(china_mil_scale = case_when(china_mil_threat == "1. Major threat" ~ 1,
+                                     china_mil_threat == "2. Minor threat" ~ 1,
+                                     china_mil_threat == "3. Not a threat" ~ 0,
+                                     TRUE ~ NA_real_)) %>%
+  mutate(days_watched_media = case_when(days_watched_media == "0. None" ~ 0,
+                                     days_watched_media == "1. One day" ~ 1,
+                                     days_watched_media == "2. Two days" ~ 2,
+                                     days_watched_media == "3. Three days" ~ 3,
+                                     days_watched_media == "4. Four days" ~ 4,
+                                     days_watched_media == "5. Five days" ~ 5,
+                                     days_watched_media == "6. Six days" ~ 6,
+                                     days_watched_media == "7. Seven days" ~ 7,
+                                     TRUE ~ NA_real_))
+
+china.mil.glm <- glm(china_mil_scale ~ days_watched_media, data = anes_2016, family = "binomial")
+
+summary(china.mil.glm)
+```
+
