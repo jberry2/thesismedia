@@ -220,4 +220,70 @@ twelve.china.econ.glm <- glm(china_econ_scale ~ days_read_internet_news + days_w
 
 summary(twelve.china.econ.glm)
 ```
+```{r}
+chicago_2016 <- 
+read_sav("2016public.sav") %>%
+  as_factor() %>%
+  select(Q5_23, Q5_24, Q45_6, Q50_5, 
+         PPETHM, PPEDUCAT, PPAGE, Q1010, Q2_2,Q2_4) %>%
+  rename(Q5_23 = china_econ_threat, Q5_24 = china_mil_threat, 
+         Q45_6 = china_temp_therm, Q50_5 = china_influence, 
+         PPEDUCAT = education, PPAGE = age, 
+         PPETHM = race, Q1010 = party_id, Q2_2 = natl_news_interest,
+         Q2_4 = usforeignaffairs_news_interest) %>%
+  mutate(year = 2016) %>%
+  mutate(china_mil_scale = case_when(china_mil_threat == "Critical threat" ~ 1,
+                                     china_mil_threat == "Important but not critical threat" ~ 1,
+                                     china_mil_threat == "Not an important threat" ~ 0,
+                                     TRUE ~ NA_real_)) %>%
+  mutate(china_econ_scale = case_when(china_econ_threat == "Critical threat" ~ 1,
+                                     china_econ_threat == "Important but not critical threat" ~ 1,
+                                     china_econ_threat == "Not an important threat" ~ 0,
+                                     TRUE ~ NA_real_)) %>%
+  mutate(education = case_when(education == "Less than high school" ~ 0,
+                                     education == "High school" ~ 4,
+                                     education == "Some college" ~ 6,
+                                     education == "Bachelor's degree or higher" ~ 10,
+                                     TRUE ~ NA_real_)) %>%
+     mutate(race = case_when(race == "White, Non-Hispanic" ~ "White",
+                                     race == "Black, Non-Hispanic" ~ "Black",
+                                     race == "Other, Non-Hispanic" ~ "Other",
+                                     race == "Hispanic" ~ "Hispanic",
+                                     race == "2+ Races, Non-Hispanic" ~ "Other",
+                                     TRUE ~ NA_character_)) %>%
+       mutate(party_id = case_when(party_id == "Democrat" ~ "Democrat",
+                                     party_id == "Republican" ~ "Republican",
+                                     party_id == "Independent" ~ "Independent",
+                                     TRUE ~ NA_character_)) %>%
+  mutate(natl_news_interest = case_when(natl_news_interest == "Very interested" ~ 3,
+                                     natl_news_interest == "Somewhat interested" ~ 2,
+                                     natl_news_interest == "Hardly interested" ~ 1,
+                                     natl_news_interest == "Don't follow the news" ~ 0,
+                                     TRUE ~ NA_real_)) %>%
+  mutate(usforeignaffairs_news_interest = case_when(usforeignaffairs_news_interest == "Very interested" ~ 3,
+                                     usforeignaffairs_news_interest == "Somewhat interested" ~ 2,
+                                     usforeignaffairs_news_interest == "Hardly interested" ~ 1,
+                                     usforeignaffairs_news_interest == "Don't follow the news" ~ 0,
+                                     TRUE ~ NA_real_)) %>%
+  mutate_at(vars(age, china_influence, china_temp_therm), as.numeric)
+  
+
+
+
+sixteen.chicago.mil.glm <- glm(china_mil_scale ~ natl_news_interest + usforeignaffairs_news_interest + education + age + race + party_id, data = chicago_2016, family = "binomial")
+
+summary(sixteen.chicago.mil.glm)
+
+sixteen.chicago.econ.glm <- glm(china_econ_scale ~ natl_news_interest + usforeignaffairs_news_interest + education + age + race + party_id, data = chicago_2016, family = "binomial")
+
+summary(sixteen.chicago.econ.glm)
+
+sixteen.chicago.temp.lm <- lm(china_temp_therm ~ natl_news_interest + usforeignaffairs_news_interest + education + age + race + party_id, data = chicago_2016)
+
+summary(sixteen.chicago.temp.lm)
+
+sixteen.chicago.influence.lm <- lm(china_influence ~ natl_news_interest + usforeignaffairs_news_interest + education + age + race + party_id, data = chicago_2016)
+
+summary(sixteen.chicago.influence.lm)
+```
 
