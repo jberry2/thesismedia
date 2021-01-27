@@ -18,6 +18,7 @@ library(ggridges)
 library(gtsummary)
 library(broom.mixed)
 library(gt)
+library(rockchalk)
 ```
 
 ## R Markdown
@@ -46,10 +47,177 @@ read_sav("anes_timeseries_2016.sav") %>%
                                      days_watched_media == "5. Five days" ~ 5,
                                      days_watched_media == "6. Six days" ~ 6,
                                      days_watched_media == "7. Seven days" ~ 7,
-                                     TRUE ~ NA_real_))
+                                     TRUE ~ NA_real_)) %>%
+  mutate(education = case_when(education == "1. Less than 1st grade" ~ 0,
+                                     education == "2. 1st, 2nd, 3rd or 4th grade" ~ 1,
+                                     education == "3. 5th or 6th grade" ~ 2,
+                                     education == "4. 7th or 8th grade" ~ 3,
+                                     education == "5. 9th grade" ~ 5,
+                                     education == "6. 10th grade" ~ 7,
+                                     education == "7. 11th grade" ~ 9,
+                                     education == "8. 12th grade no diploma" ~ 11,
+                                     education == "9. High school graduate- high school diploma or equivalent (for example: GED)" ~ 15,
+                                     education == "10. Some college but no degree" ~ 17,
+                                     education == "11. Associate degree in college - occupational /vocational program" ~ 20,
+                                     education == "12. Associate degree in college -- academic program" ~ 20,
+                                     education == "13. Bachelor's degree (for example: BA, AB, BS)" ~ 25,
+                                     education == "14. Master's degree (for example: MA, MS, MENG, MED, MSW, MBA) " ~ 28,
+                                     education == "15. Professional school degree (for example: MD, DDS, DVM, LLB, JD)" ~ 31,
+                                     education == "16. Doctorate degree (for example: PHD, EDD)" ~ 35,
+                                     TRUE ~ NA_real_)) %>%
+   mutate(age = case_when(age == "01. Age group 18-20" ~ 0,
+                                     age == "02. Age group 21-24" ~ 1,
+                                     age == "03. Age group 25-29" ~ 3,
+                                     age == "04. Age group 30-34" ~ 6,
+                                     age == "05. Age group 35-39" ~ 9,
+                                     age == "06. Age group 40-44" ~ 12,
+                                     age == "07. Age group 45-49" ~ 15,
+                                     age == "08. Age group 50-54" ~ 18,
+                                     age == "09. Age group 55-59" ~ 21,
+                                     age == "10. Age group 60-64" ~ 24,
+                                     age == "11. Age group 65-69" ~ 27,
+                                     age == "12. Age group 70-74" ~ 30,
+                                     age == "13. Age group 75 or older"  ~ 35,
+                                     TRUE ~ NA_real_)) %>%
+     mutate(race = case_when(race == "1. White, non-Hispanic" ~ "White",
+                                     race == "2. Black, non-Hispanic" ~ "Black",
+                                     race == "3. Asian, native Hawaiian or other Pacif Islr,non-Hispanic" ~ "Asian",
+                                     race == "5. Hispanic" ~ "Hispanic",
+                                     race == "6. Other non-Hispanic incl multiple races [WEB: blank 'Other' counted as a race]" ~ "Other",
+                                     race == "4. Native American or Alaska Native, non-Hispanic" ~ "Native American",
+                                     TRUE ~ NA_character_)) %>%
+       mutate(party_id = case_when(party_id == "1. Democrat" ~ "Democrat",
+                                     party_id == "2. Republican" ~ "Republican",
+                                     party_id == "3. Independent" ~ "Independent",
+                                     TRUE ~ NA_character_))
 
-china.mil.glm <- glm(china_mil_scale ~ days_watched_media, data = anes_2016, family = "binomial")
 
-summary(china.mil.glm)
+
+sixteen.china.mil.glm <- glm(china_mil_scale ~ days_watched_media + education + age + race + party_id,
+                     data = anes_2016, family = "binomial")
+
+summary(sixteen.china.mil.glm)
+```
+
+
+
+```{r}
+anes_2012 <- 
+read_sav("anes_timeseries_2012.sav") %>%
+  as_factor() %>%
+  select(prmedia_wkinews, prmedia_atinews, prmedia_wktvnws, prmedia_attvnews, 
+         prmedia_wkpaprnws, prmedia_atpprnews, prmedia_wkrdnws, prmedia_atrdnews, dem_racecps_1st, dem_agegrp_iwdate_x, dem_edu, pid_self, china_econ, china_mil, medsrc_socmedia) %>%
+    rename(prmedia_wkinews = days_read_internet_news, prmedia_wktvnws = days_watched_tv_news, 
+         prmedia_wkpaprnws = days_read_paper_news, prmedia_wkrdnws = days_listened_radio_news,
+         medsrc_socmedia = days_read_socmedia_news,
+         dem_edu = education, dem_agegrp_iwdate_x = age, 
+         dem_racecps_1st = race, pid_self = party_id) %>%
+  mutate(year = 2012) %>%
+  mutate(china_mil_scale = case_when(china_mil == "1. Major threat" ~ 1,
+                                     china_mil == "2. Minor threat" ~ 1,
+                                     china_mil == "3. Not a threat" ~ 0,
+                                     TRUE ~ NA_real_)) %>%
+   mutate(china_econ_scale = case_when(china_econ == "1. Good" ~ 0,
+                                     china_econ == "2. Bad" ~ 1,
+                                     china_econ == "3. No effect" ~ 0,
+                                     TRUE ~ NA_real_)) %>%
+  mutate(days_read_internet_news = case_when(days_read_internet_news == "0. None" ~ 0,
+                                     days_read_internet_news == "1. One day" ~ 1,
+                                     days_read_internet_news == "2. Two days" ~ 2,
+                                     days_read_internet_news == "3. Three days" ~ 3,
+                                     days_read_internet_news == "4. Four days" ~ 4,
+                                     days_read_internet_news == "5. Five days" ~ 5,
+                                     days_read_internet_news == "6. Six days" ~ 6,
+                                     days_read_internet_news == "7. Seven days" ~ 7,
+                                     TRUE ~ NA_real_)) %>%
+  mutate(days_watched_tv_news = case_when(days_watched_tv_news == "0. None" ~ 0,
+                                     days_watched_tv_news == "1. One day" ~ 1,
+                                     days_watched_tv_news == "2. Two days" ~ 2,
+                                     days_watched_tv_news == "3. Three days" ~ 3,
+                                     days_watched_tv_news == "4. Four days" ~ 4,
+                                     days_watched_tv_news == "5. Five days" ~ 5,
+                                     days_watched_tv_news == "6. Six days" ~ 6,
+                                     days_watched_tv_news == "7. Seven days" ~ 7,
+                                     TRUE ~ NA_real_)) %>%
+    mutate(days_read_paper_news = case_when(days_read_paper_news == "0. None" ~ 0,
+                                     days_read_paper_news == "1. One day" ~ 1,
+                                     days_read_paper_news == "2. Two days" ~ 2,
+                                     days_read_paper_news == "3. Three days" ~ 3,
+                                     days_read_paper_news == "4. Four days" ~ 4,
+                                     days_read_paper_news == "5. Five days" ~ 5,
+                                     days_read_paper_news == "6. Six days" ~ 6,
+                                     days_read_paper_news == "7. Seven days" ~ 7,
+                                     TRUE ~ NA_real_)) %>%
+      mutate(days_listened_radio_news = case_when(days_listened_radio_news == "0. None" ~ 0,
+                                     days_listened_radio_news == "1. One day" ~ 1,
+                                     days_listened_radio_news == "2. Two days" ~ 2,
+                                     days_listened_radio_news == "3. Three days" ~ 3,
+                                     days_listened_radio_news == "4. Four days" ~ 4,
+                                     days_listened_radio_news == "5. Five days" ~ 5,
+                                     days_listened_radio_news == "6. Six days" ~ 6,
+                                     days_listened_radio_news == "7. Seven days" ~ 7,
+                                     TRUE ~ NA_real_)) %>%
+  mutate(days_read_socmedia_news = case_when(days_read_socmedia_news == "0. None" ~ 0,
+                                     days_read_socmedia_news == "1. One day" ~ 1,
+                                     days_read_socmedia_news == "2. Two days" ~ 2,
+                                     days_read_socmedia_news == "3. Three days" ~ 3,
+                                     days_read_socmedia_news == "4. Four days" ~ 4,
+                                     days_read_socmedia_news == "5. Five days" ~ 5,
+                                     days_read_socmedia_news == "6. Six days" ~ 6,
+                                     days_read_socmedia_news == "7. Seven days" ~ 7,
+                                     TRUE ~ NA_real_)) %>%
+  mutate(education = case_when(education == "1. Less than 1st grade" ~ 0,
+                                     education == "2. 1st, 2nd, 3rd or 4th grade" ~ 1,
+                                     education == "3. 5th or 6th grade" ~ 2,
+                                     education == "4. 7th or 8th grade" ~ 3,
+                                     education == "5. 9th grade" ~ 5,
+                                     education == "6. 10th grade" ~ 7,
+                                     education == "7. 11th grade" ~ 9,
+                                     education == "8. 12th grade no diploma" ~ 11,
+                                     education == "9. High school graduate- high school diploma or equivalent (for example: GED)" ~ 15,
+                                     education == "10. Some college but no degree" ~ 17,
+                                     education == "11. Associate degree in college - occupational /vocational program" ~ 20,
+                                     education == "12. Associate degree in college -- academic program" ~ 20,
+                                     education == "13. Bachelor's degree (for example: BA, AB, BS)" ~ 25,
+                                     education == "14. Master's degree (for example: MA, MS, MENG, MED, MSW, MBA) " ~ 28,
+                                     education == "15. Professional school degree (for example: MD, DDS, DVM, LLB, JD)" ~ 31,
+                                     education == "16. Doctorate degree (for example: PHD, EDD)" ~ 35,
+                                     TRUE ~ NA_real_)) %>%
+   mutate(age = case_when(age == "01. Age group 17-20" ~ 0,
+                                     age == "02. Age group 21-24" ~ 1,
+                                     age == "03. Age group 25-29" ~ 3,
+                                     age == "04. Age group 30-34" ~ 6,
+                                     age == "05. Age group 35-39" ~ 9,
+                                     age == "06. Age group 40-44" ~ 12,
+                                     age == "07. Age group 45-49" ~ 15,
+                                     age == "08. Age group 50-54" ~ 18,
+                                     age == "09. Age group 55-59" ~ 21,
+                                     age == "10. Age group 60-64" ~ 24,
+                                     age == "11. Age group 65-69" ~ 27,
+                                     age == "12. Age group 70-74" ~ 30,
+                                     age == "13. Age group 75 or older"  ~ 35,
+                                     TRUE ~ NA_real_)) %>%
+     mutate(race = case_when(race == "01. White" ~ "White",
+                                     race == "02. Black or African-American" ~ "Black",
+                                     race == "04. Asian" ~ "Asian",
+                                     race == "05. Native Hawaiian or other Pacific Islander" ~ "Asian",
+                                     race == "03. American Indian or Alaska Native" ~ "Native American",
+                                     TRUE ~ NA_character_)) %>%
+       mutate(party_id = case_when(party_id == "1. Democrat" ~ "Democrat",
+                                     party_id == "2. Republican" ~ "Republican",
+                                     party_id == "3. Independent" ~ "Independent",
+                                     TRUE ~ NA_character_))
+
+
+
+twelve.china.mil.glm <- glm(china_mil_scale ~ days_read_internet_news + days_watched_tv_news + days_read_paper_news + days_listened_radio_news + days_read_socmedia_news + education + age + race + party_id,
+                     data = anes_2012, family = "binomial")
+
+summary(twelve.china.mil.glm)
+
+twelve.china.econ.glm <- glm(china_econ_scale ~ days_read_internet_news + days_watched_tv_news + days_read_paper_news + days_listened_radio_news + days_read_socmedia_news + education + age + race + party_id,
+                     data = anes_2012, family = "binomial")
+
+summary(twelve.china.econ.glm)
 ```
 
