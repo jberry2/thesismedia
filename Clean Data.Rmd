@@ -287,3 +287,89 @@ sixteen.chicago.influence.lm <- lm(china_influence ~ natl_news_interest + usfore
 summary(sixteen.chicago.influence.lm)
 ```
 
+```{r}
+chicago_2017 <- 
+read_sav("2017public.sav") %>%
+  as_factor() %>%
+  select(Q2B, Q130_9, Q12_2, Q50_5, Q80_2, Q5_NEW_5_3,
+         PPETHM, PPEDUCAT, PPAGE, Q1010) %>%
+  rename(Q2B = main_media_source, Q130_9 = trust_media_do_good, 
+         Q12_2 = china_world_responsible, Q50_5 = china_influence, 
+         Q80_2 = china_fair_trade, Q5_NEW_5_3 = china_rise_threat,
+         PPEDUCAT = education, PPAGE = age, 
+         PPETHM = race, Q1010 = party_id) %>%
+  mutate(year = 2016) %>%
+  mutate(china_fair_trade_scale = case_when(china_fair_trade == "Practice unfair trade" ~ 1,
+                                     china_fair_trade == "Practice fair trade" ~ 0,
+                                     TRUE ~ NA_real_)) %>%
+  mutate(china_rise_threat_scale = case_when(china_rise_threat == "Critical threat" ~ 1,
+                                     china_rise_threat == "Important but not critical threat" ~ 1,
+                                     china_rise_threat == "Not an important threat" ~ 0,
+                                     TRUE ~ NA_real_)) %>%
+  mutate(education = case_when(education == "Less than high school" ~ 0,
+                                     education == "High school" ~ 4,
+                                     education == "Some college" ~ 6,
+                                     education == "Bachelor's degree or higher" ~ 10,
+                                     TRUE ~ NA_real_)) %>%
+     mutate(race = case_when(race == "White, Non-Hispanic" ~ "White",
+                                     race == "Black, Non-Hispanic" ~ "Black",
+                                     race == "Other, Non-Hispanic" ~ "Other",
+                                     race == "Hispanic" ~ "Hispanic",
+                                     race == "2+ Races, Non-Hispanic" ~ "Other",
+                                     TRUE ~ NA_character_)) %>%
+       mutate(main_media_source = case_when(main_media_source == "Newspapers and news magazines" ~ "Newspapers and news magazines",
+                                     main_media_source == "Radio" ~ "Radio",
+                                     main_media_source == "Network TV news broadcasts (For example: ABC, CBS, or NBC)" ~ "Network TV news broadcasts (For example: ABC, CBS, or NBC)",
+                                     main_media_source == "Cable TV news broadcasts (For example: CNN, Fox News, or MSNBC)" ~ "Cable TV news broadcasts (For example: CNN, Fox News, or MSNBC)",
+                                     main_media_source == "Blogs and other websites" ~ "Blogs and other websites",
+                                     main_media_source == "Facebook, Twitter and other social media" ~ "Facebook, Twitter and other social media",
+                                     TRUE ~ NA_character_)) %>%
+         mutate(trust_media_do_good = case_when(trust_media_do_good == "A great deal" ~ "A great deal",
+                                     trust_media_do_good == "A fair amount" ~ "A fair amount",
+                                     trust_media_do_good == "Not very much" ~ "Not very much",
+                                     trust_media_do_good == "No confidence at all" ~ "No confidence at all",
+                                     TRUE ~ NA_character_)) %>%
+       mutate(party_id = case_when(party_id == "Democrat" ~ "Democrat",
+                                     party_id == "Republican" ~ "Republican",
+                                     party_id == "Independent" ~ "Independent",
+                                     TRUE ~ NA_character_)) %>%
+  mutate_at(vars(age, china_influence, china_world_responsible), as.numeric)
+  
+# chicago_2017$main_media_source <- relevel(chicago_2017$main_media_source, "Newspapers and news magazines")
+chicago_2017$main_media_source <- factor(chicago_2017$main_media_source, levels = c("Newspapers and news magazines", "Radio", "Network TV news broadcasts (For example: ABC, CBS, or NBC)", "Cable TV news broadcasts (For example: CNN, Fox News, or MSNBC)", "Blogs and other websites", "Facebook, Twitter and other social media" ~ "Facebook, Twitter and other social media"))
+
+chicago_2017$trust_media_do_good <- factor(chicago_2017$trust_media_do_good, levels = c("A great deal", "A fair amount", "Not very much", "No confidence at all"))
+
+seventeen.chicago.trade.glm <- glm(china_fair_trade ~ main_media_source + education + age + race + party_id, data = chicago_2017, family = "binomial")
+
+summary(seventeen.chicago.trade.glm)
+
+seventeen.chicago.threat.glm <- glm(china_rise_threat_scale ~ main_media_source + education + age + race + party_id, data = chicago_2017, family = "binomial")
+
+summary(seventeen.chicago.threat.glm)
+
+seventeen.chicago.responsible.lm <- lm(china_world_responsible ~ main_media_source + education + age + race + party_id, data = chicago_2017)
+
+summary(seventeen.chicago.responsible.lm)
+
+seventeen.chicago.influence.lm <- lm(china_influence ~ main_media_source + education + age + race + party_id, data = chicago_2017)
+
+summary(seventeen.chicago.influence.lm)
+
+two.seventeen.chicago.trade.glm <- glm(china_fair_trade ~ trust_media_do_good + education + age + race + party_id, data = chicago_2017, family = "binomial")
+
+summary(two.seventeen.chicago.trade.glm)
+
+two.seventeen.chicago.threat.glm <- glm(china_rise_threat_scale ~ trust_media_do_good + education + age + race + party_id, data = chicago_2017, family = "binomial")
+
+summary(two.seventeen.chicago.threat.glm)
+
+two.seventeen.chicago.responsible.lm <- lm(china_world_responsible ~ trust_media_do_good + education + age + race + party_id, data = chicago_2017)
+
+summary(two.seventeen.chicago.responsible.lm)
+
+two.seventeen.chicago.influence.lm <- lm(china_influence ~ trust_media_do_good + education + age + race + party_id, data = chicago_2017)
+
+summary(two.seventeen.chicago.influence.lm)
+```
+
