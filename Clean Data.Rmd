@@ -373,3 +373,541 @@ two.seventeen.chicago.influence.lm <- lm(china_influence ~ trust_media_do_good +
 summary(two.seventeen.chicago.influence.lm)
 ```
 
+```{r}
+chicago_2018 <- 
+read_sav("2018public.sav") %>%
+  as_factor() %>%
+  select(Q450b_2, Q450C_2, Q144_1, Q30_2, Q30_14,Q50_5, Q376, Q73_5, Q5_NEW_3, Q5_NEW_41, Q2_2, Q2_4,  
+         PPETHM, PPEDUCAT, PPAGE, Q1010, Q130_9,PPGENDER) %>%
+  rename(Q2_2 = national_news_interest, Q130_9 = trust_media_do_good, Q2_4 = us_relations_news_interest,
+         Q144_1 = china_intl_respect, Q50_5 = china_influence, Q376 = us_china_partnership,
+         Q450b_2 = china_economic_relationship_importance, Q450C_2 = china_security_importance,
+         Q5_NEW_3 = china_rise_threat, Q5_NEW_41 = china_trade_war_threat,
+         Q30_2 = war_with_china_taiwan, Q30_14 = war_with_china_japan, Q73_5 = china_approval_nkoreanukes,
+         PPEDUCAT = education, PPAGE = age, PPGENDER = gender,
+         PPETHM = race, Q1010 = party_id) %>%
+  mutate(year = 2018) %>%
+  mutate(us_china_partnership = case_when(us_china_partnership == "Building up our strong relations with traditional allies like South Korea and Japan [...]" ~ 1,
+                                     us_china_partnership == "Building a new partnership with China [...]" ~ 0,
+                                     TRUE ~ NA_real_)) %>%
+  mutate(china_rise_threat_scale = case_when(china_rise_threat == "Critical threat" ~ 1,
+                                     china_rise_threat == "Important but not critical threat" ~ 1,
+                                     china_rise_threat == "Not an important threat" ~ 0,
+                                     TRUE ~ NA_real_)) %>%
+    mutate(china_trade_war_scale = case_when(china_trade_war_threat == "Critical threat" ~ 1,
+                                     china_trade_war_threat == "Important but not critical threat" ~ 1,
+                                     china_trade_war_threat == "Not an important threat" ~ 0,
+                                     TRUE ~ NA_real_)) %>%
+  mutate(china_intl_respect_scale = case_when(china_intl_respect == "Respected more" ~ 0,
+                                     china_intl_respect == "Respected less" ~ 1,
+                                     china_intl_respect == "Respected about as much as ten years ago" ~ 0,
+                                     TRUE ~ NA_real_)) %>%
+  mutate(china_approval_nkoreanukes_scale = case_when(china_approval_nkoreanukes == "Necessary" ~ 0,
+                                     china_approval_nkoreanukes == "Preferable but not necessary" ~ 1,
+                                     china_approval_nkoreanukes == "Neither preferable nor necessary" ~ 1,
+                                     TRUE ~ NA_real_)) %>%
+   mutate(war_with_china_taiwan_scale = case_when(war_with_china_taiwan == "Favor" ~ 1,
+                                     war_with_china_taiwan == "Oppose" ~ 0,
+                                     TRUE ~ NA_real_)) %>%
+   mutate(war_with_china_japan_scale = case_when(war_with_china_japan == "Favor" ~ 1,
+                                     war_with_china_japan == "Oppose" ~ 0,
+                                     TRUE ~ NA_real_)) %>%
+  mutate(education = case_when(education == "Less than high school" ~ 0,
+                                     education == "High school" ~ 4,
+                                     education == "Some college" ~ 6,
+                                     education == "Bachelor's degree or higher" ~ 10,
+                                     TRUE ~ NA_real_)) %>%
+     mutate(race = case_when(race == "White, Non-Hispanic" ~ "White",
+                                     race == "Black, Non-Hispanic" ~ "Black",
+                                     race == "Other, Non-Hispanic" ~ "Other",
+                                     race == "Hispanic" ~ "Hispanic",
+                                     race == "2+ Races, Non-Hispanic" ~ "Other",
+                                     TRUE ~ NA_character_)) %>%
+       mutate(national_news_interest = case_when(national_news_interest == "Very interested" ~ "Very interested",
+                                     national_news_interest == "Somewhat interested" ~ "Somewhat interested",
+                                     national_news_interest == "Hardly interested" ~ "Hardly interested",
+                                     national_news_interest == "Don't follow the news" ~ "Don't follow the news",
+                                     TRUE ~ NA_character_)) %>%
+         mutate(us_relations_news_interest = case_when(us_relations_news_interest == "Very interested" ~ "Very interested",
+                                     us_relations_news_interest == "Somewhat interested" ~ "Somewhat interested",
+                                     us_relations_news_interest == "Hardly interested" ~ "Hardly interested",
+                                     us_relations_news_interest == "Don't follow the news" ~ "Don't follow the news",
+                                     TRUE ~ NA_character_)) %>%
+         mutate(trust_media_do_good = case_when(trust_media_do_good == "A great deal" ~ "A great deal",
+                                     trust_media_do_good == "A fair amount" ~ "A fair amount",
+                                     trust_media_do_good == "Not very much" ~ "Not very much",
+                                     trust_media_do_good == "No confidence at all" ~ "No confidence at all",
+                                     TRUE ~ NA_character_)) %>%
+       mutate(party_id = case_when(party_id == "Democrat" ~ "Democrat",
+                                     party_id == "Republican" ~ "Republican",
+                                     party_id == "Independent" ~ "Independent",
+                                     TRUE ~ "Independent")) %>%
+       mutate(gender = case_when(gender == "Male" ~ "Male",
+                                     gender == "Female" ~ "Female",
+                                     TRUE ~ NA_character_)) %>%
+  mutate_at(vars(age, china_influence, china_economic_relationship_importance, china_security_importance), as.numeric)
+  
+# chicago_2017$main_media_source <- relevel(chicago_2017$main_media_source, "Newspapers and news magazines")
+chicago_2018$national_news_interest <- factor(chicago_2018$national_news_interest, levels = c("Very interested", "Somewhat interested", "Hardly interested", "Don't follow the news"))
+
+chicago_2018$us_relations_news_interest <- factor(chicago_2018$us_relations_news_interest, levels = c("Very interested", "Somewhat interested", "Hardly interested", "Don't follow the news"))
+
+
+chicago_2018$trust_media_do_good <- factor(chicago_2018$trust_media_do_good, levels = c("A great deal", "A fair amount", "Not very much", "No confidence at all"))
+
+eighteen.chicago.partnership.glm <- glm(us_china_partnership ~ national_news_interest + education + age + race + party_id + gender, data = chicago_2018, family = "binomial")
+
+summary(eighteen.chicago.rise.glm)
+
+two.eighteen.chicago.partnership.glm <- glm(us_china_partnership ~ us_relations_news_interest + education + age + race + party_id + gender, data = chicago_2018, family = "binomial")
+
+summary(two.eighteen.chicago.rise.glm)
+
+three.eighteen.chicago.partnership.glm <- glm(us_china_partnership ~ trust_media_do_good + education + age + race + party_id + gender, data = chicago_2018, family = "binomial")
+
+summary(three.eighteen.chicago.partnership.glm)
+
+eighteen.chicago.rise.glm <- glm(china_rise_threat_scale ~ national_news_interest + education + age + race + party_id + gender, data = chicago_2018, family = "binomial")
+
+summary(eighteen.chicago.rise.glm)
+
+two.eighteen.chicago.rise.glm <- glm(china_rise_threat_scale ~ us_relations_news_interest + education + age + race + party_id + gender, data = chicago_2018, family = "binomial")
+
+summary(two.eighteen.chicago.rise.glm)
+
+three.eighteen.chicago.rise.glm <- glm(china_rise_threat_scale ~ trust_media_do_good + education + age + race + party_id + gender, data = chicago_2018, family = "binomial")
+
+summary(three.eighteen.chicago.rise.glm)
+
+eighteen.chicago.tradewar.glm <- glm(china_trade_war_scale ~ national_news_interest + education + age + race + party_id + gender, data = chicago_2018, family = "binomial")
+
+summary(eighteen.chicago.tradewar.glm)
+
+two.eighteen.chicago.tradewar.glm <- glm(china_trade_war_scale ~ us_relations_news_interest + education + age + race + party_id + gender, data = chicago_2018, family = "binomial")
+
+summary(two.eighteen.chicago.tradewar.glm)
+
+three.eighteen.chicago.tradewar.glm <- glm(china_trade_war_scale ~ trust_media_do_good + education + age + race + party_id + gender, data = chicago_2018, family = "binomial")
+
+summary(three.eighteen.chicago.tradewar.glm)
+
+eighteen.chicago.respect.glm <- glm(china_intl_respect_scale ~ national_news_interest + education + age + race + party_id + gender, data = chicago_2018, family = "binomial")
+
+summary(eighteen.chicago.respect.glm)
+
+two.eighteen.chicago.respect.glm <- glm(china_intl_respect_scale ~ us_relations_news_interest + education + age + race + party_id + gender, data = chicago_2018, family = "binomial")
+
+summary(two.eighteen.chicago.respect.glm)
+
+three.eighteen.chicago.respect.glm <- glm(china_intl_respect_scale ~ trust_media_do_good + education + age + race + party_id + gender, data = chicago_2018, family = "binomial")
+
+summary(three.eighteen.chicago.respect.glm)
+
+eighteen.chicago.koreanukes.glm <- glm(china_approval_nkoreanukes_scale ~ national_news_interest + education + age + race + party_id + gender, data = chicago_2018, family = "binomial")
+
+summary(eighteen.chicago.koreanukes.glm)
+
+two.eighteen.chicago.koreanukes.glm <- glm(china_approval_nkoreanukes_scale ~ us_relations_news_interest + education + age + race + party_id + gender, data = chicago_2018, family = "binomial")
+
+summary(two.eighteen.chicago.koreanukes.glm)
+
+three.eighteen.chicago.koreanukes.glm <- glm(china_approval_nkoreanukes_scale ~ trust_media_do_good + education + age + race + party_id + gender, data = chicago_2018, family = "binomial")
+
+summary(three.eighteen.chicago.koreanukes.glm)
+
+eighteen.chicago.wartaiwan.glm <- glm(war_with_china_taiwan_scale ~ national_news_interest + education + age + race + party_id + gender, data = chicago_2018, family = "binomial")
+
+summary(eighteen.chicago.wartaiwan.glm)
+
+two.eighteen.chicago.wartaiwan.glm <- glm(war_with_china_taiwan_scale ~ us_relations_news_interest + education + age + race + party_id + gender, data = chicago_2018, family = "binomial")
+
+summary(two.eighteen.chicago.wartaiwan.glm)
+
+three.eighteen.chicago.wartaiwan.glm <- glm(war_with_china_taiwan_scale ~ trust_media_do_good + education + age + race + party_id + gender, data = chicago_2018, family = "binomial")
+
+summary(three.eighteen.chicago.wartaiwan.glm)
+
+eighteen.chicago.warjapan.glm <- glm(war_with_china_japan_scale ~ national_news_interest + education + age + race + party_id + gender, data = chicago_2018, family = "binomial")
+
+summary(eighteen.chicago.warjapan.glm)
+
+two.eighteen.chicago.warjapan.glm <- glm(war_with_china_japan_scale ~ us_relations_news_interest + education + age + race + party_id + gender, data = chicago_2018, family = "binomial")
+
+summary(two.eighteen.chicago.warjapan.glm)
+
+three.eighteen.chicago.warjapan.glm <- glm(war_with_china_japan_scale ~ trust_media_do_good + education + age + race + party_id + gender, data = chicago_2018, family = "binomial")
+
+summary(three.eighteen.chicago.warjapan.glm)
+
+eighteen.chicago.influence.lm <- lm(china_influence ~ national_news_interest + education + age + race + party_id + gender, data = chicago_2018)
+
+summary(eighteen.chicago.influence.lm)
+
+two.eighteen.chicago.influence.lm <- lm(china_influence ~ us_relations_news_interest + education + age + race + party_id + gender, data = chicago_2018)
+
+summary(two.eighteen.chicago.influence.lm)
+
+three.eighteen.chicago.influence.lm <- lm(china_influence ~ trust_media_do_good + education + age + race + party_id + gender, data = chicago_2018)
+
+summary(three.eighteen.chicago.influence.lm)
+
+eighteen.chicago.econrelationship.lm <- lm(china_economic_relationship_importance ~ national_news_interest + education + age + race + party_id + gender, data = chicago_2018)
+
+summary(eighteen.chicago.econrelationship.lm)
+
+two.eighteen.chicago.econrelationship.lm <- lm(china_economic_relationship_importance ~ us_relations_news_interest + education + age + race + party_id + gender, data = chicago_2018)
+
+summary(two.eighteen.chicago.econrelationship.lm)
+
+three.eighteen.chicago.econrelationship.lm <- lm(china_economic_relationship_importance ~ trust_media_do_good + education + age + race + party_id + gender, data = chicago_2018)
+
+summary(three.eighteen.chicago.econrelationship.lm)
+
+eighteen.chicago.securityrelationship.lm <- lm(china_security_importance ~ national_news_interest + education + age + race + party_id + gender, data = chicago_2018)
+
+summary(eighteen.chicago.securityrelationship.lm)
+
+two.eighteen.chicago.securityrelationship.lm <- lm(china_security_importance ~ us_relations_news_interest + education + age + race + party_id + gender, data = chicago_2018)
+
+summary(two.eighteen.chicago.securityrelationship.lm)
+
+three.eighteen.chicago.securityrelationship.lm <- lm(china_security_importance ~ trust_media_do_good + education + age + race + party_id + gender, data = chicago_2018)
+
+summary(three.eighteen.chicago.securityrelationship.lm)
+```
+
+
+```{r}
+chicago_2015 <- 
+read_sav("2015public.sav") %>%
+  as_factor() %>%
+  select(Q20_NEW_B, Q12_NEW_B, Q325B_D, Q30_B, Q30_H, Q450_B, Q330C, Q332, Q2_NEW_B, Q2_NEW_D, PPETHM, PPEDUCAT, PPAGE, Q1010, PPGENDER) %>%
+  rename(Q2_NEW_B = national_news_interest, Q2_NEW_D = us_relations_news_interest,
+         Q20_NEW_B = china_leadership, Q12_NEW_B = china_world_problems, Q325B_D = china_asia_problems,
+         Q30_B = war_with_china_taiwan, Q30_H = war_with_china_japan, Q450_B = us_china_relationship_importance,
+         Q330C = us_china_partner, Q332 = improve_relations_strategy,
+         PPEDUCAT = education, PPAGE = age, PPGENDER = gender,
+         PPETHM = race, Q1010 = party_id) %>%
+  mutate(year = 2015) %>%
+   mutate(war_with_china_taiwan_scale = case_when(war_with_china_taiwan == "Favor" ~ 1,
+                                     war_with_china_taiwan == "Oppose" ~ 0,
+                                     TRUE ~ NA_real_)) %>%
+   mutate(war_with_china_japan_scale = case_when(war_with_china_japan == "Favor" ~ 1,
+                                     war_with_china_japan == "Oppose" ~ 0,
+                                     TRUE ~ NA_real_)) %>%
+  mutate(education = case_when(education == "Less than high school" ~ 0,
+                                     education == "High school" ~ 4,
+                                     education == "Some college" ~ 6,
+                                     education == "Bachelor's degree or higher" ~ 10,
+                                     TRUE ~ NA_real_)) %>%
+     mutate(race = case_when(race == "White, Non-Hispanic" ~ "White",
+                                     race == "Black, Non-Hispanic" ~ "Black",
+                                     race == "Other, Non-Hispanic" ~ "Other",
+                                     race == "Hispanic" ~ "Hispanic",
+                                     race == "2+ Races, Non-Hispanic" ~ "Other",
+                                     TRUE ~ NA_character_)) %>%
+     mutate(national_news_interest = case_when(national_news_interest == "Very interested" ~ "Very interested",
+                                     national_news_interest == "Somewhat interested" ~ "Somewhat interested",
+                                     national_news_interest == "Hardly interested" ~ "Hardly interested",
+                                     national_news_interest == "Don't follow the news" ~ "Don't follow the news",
+                                     TRUE ~ NA_character_)) %>%
+     mutate(us_relations_news_interest = case_when(us_relations_news_interest == "Very interested" ~ "Very interested",
+                                     us_relations_news_interest == "Somewhat interested" ~ "Somewhat interested",
+                                     us_relations_news_interest == "Hardly interested" ~ "Hardly interested",
+                                     us_relations_news_interest == "Don't follow the news" ~ "Don't follow the news",
+                                     TRUE ~ NA_character_)) %>%
+       mutate(party_id = case_when(party_id == "Democrat" ~ "Democrat",
+                                     party_id == "Republican" ~ "Republican",
+                                     party_id == "Independent" ~ "Independent",
+                                     TRUE ~ NA_character_)) %>%
+         mutate(gender = case_when(gender == "Male" ~ "Male",
+                                     gender == "Female" ~ "Female",
+                                     TRUE ~ NA_character_)) %>%
+  mutate_at(vars(age, china_leadership, china_world_problems, china_asia_problems, us_china_relationship_importance, us_china_partner), as.numeric)
+  
+# chicago_2017$main_media_source <- relevel(chicago_2017$main_media_source, "Newspapers and news magazines")
+
+chicago_2015$national_news_interest <- factor(chicago_2015$national_news_interest, levels = c("Very interested", "Somewhat interested", "Hardly interested", "Don't follow the news"))
+
+chicago_2015$us_relations_news_interest <- factor(chicago_2015$us_relations_news_interest, levels = c("Very interested", "Somewhat interested", "Hardly interested", "Don't follow the news"))
+
+fifteen.chicago.wartaiwan.glm <- glm(war_with_china_taiwan_scale ~ national_news_interest + education + age + race + party_id + gender, data = chicago_2015, family = "binomial")
+
+summary(fifteen.chicago.wartaiwan.glm)
+
+two.fifteen.chicago.wartaiwan.glm <- glm(war_with_china_taiwan_scale ~ us_relations_news_interest + education + age + race + party_id + gender, data = chicago_2015, family = "binomial")
+
+summary(two.fifteen.chicago.wartaiwan.glm)
+
+fifteen.chicago.warjapan.glm <- glm(war_with_china_japan_scale ~ national_news_interest + education + age + race + party_id + gender, data = chicago_2015, family = "binomial")
+
+summary(fifteen.chicago.warjapan.glm)
+
+two.fifteen.chicago.warjapan.glm <- glm(war_with_china_japan_scale ~ us_relations_news_interest + education + age + race + party_id + gender, data = chicago_2015, family = "binomial")
+
+summary(two.fifteen.chicago.warjapan.glm)
+
+fifteen.chicago.leadership.lm <- lm(china_leadership ~ national_news_interest + education + age + race + party_id + gender, data = chicago_2015)
+
+summary(fifteen.chicago.leadership.lm)
+
+two.fifteen.chicago.leadership.lm <- lm(china_leadership ~ us_relations_news_interest + education + age + race + party_id + gender, data = chicago_2015)
+
+summary(two.fifteen.chicago.leadership.lm)
+
+fifteen.chicago.worldproblems.lm <- lm(china_world_problems ~ national_news_interest + education + age + race + party_id + gender, data = chicago_2015)
+
+summary(fifteen.chicago.worldproblems.lm)
+
+two.fifteen.chicago.worldproblems.lm <- lm(china_world_problems ~ us_relations_news_interest + education + age + race + party_id + gender, data = chicago_2015)
+
+summary(two.fifteen.chicago.worldproblems.lm)
+
+fifteen.chicago.asiaproblems.lm <- lm(china_asia_problems ~ national_news_interest + education + age + race + party_id + gender, data = chicago_2015)
+
+summary(fifteen.chicago.asiaproblems.lm)
+
+two.fifteen.chicago.asiaproblems.lm <- lm(china_asia_problems ~ us_relations_news_interest + education + age + race + party_id + gender, data = chicago_2015)
+
+summary(two.fifteen.chicago.asiaproblems.lm)
+
+fifteen.chicago.uschinarelations.lm <- lm(us_china_relationship_importance ~ national_news_interest + education + age + race + party_id + gender, data = chicago_2015)
+
+summary(fifteen.chicago.uschinarelations.lm)
+
+two.fifteen.chicago.uschinarelations.lm <- lm(us_china_relationship_importance ~ us_relations_news_interest + education + age + race + party_id + gender, data = chicago_2015)
+
+summary(two.fifteen.chicago.uschinarelations.lm)
+
+fifteen.chicago.chinapartner.lm <- lm(us_china_partner ~ national_news_interest + education + age + race + party_id + gender, data = chicago_2015)
+
+summary(fifteen.chicago.chinapartner.lm)
+
+two.fifteen.chicago.chinapartner.lm <- lm(us_china_partner ~ us_relations_news_interest + education + age + race + party_id + gender, data = chicago_2015)
+
+summary(two.fifteen.chicago.chinapartner.lm)
+```
+
+```{r}
+chicago_2014 <- 
+read_sav("2014public.sav") %>%
+  as_factor() %>%
+  select(q455_2, q340, q350, q376, q45_06, q50_5, q125_8, q120_8, ppethm, ppeducat, ppage, q1010, ppgender) %>%
+  rename(q125_8 = media_should_influence, q120_8 = media_does_influence,
+         q455_2 = china_us_rivals, q340 = china_economy_good, q350 = us_china_power_counter,
+         q376 = us_asia_policy, q45_06 = china_temp_therm, q50_5 = china_influence,
+         ppeducat = education, ppage = age, ppgender = gender,
+         ppethm = race, q1010 = party_id) %>%
+  mutate(year = 2014) %>%
+   mutate(china_us_rivals = case_when(china_us_rivals == "Mostly rivals" ~ 1,
+                                     china_us_rivals == "Mostly partners" ~ 0,
+                                     TRUE ~ NA_real_)) %>%
+   mutate(china_economy_good = case_when(china_economy_good == "Mostly positive" ~ 1,
+                                     china_economy_good == "Mostly negative" ~ 0,
+                                     china_economy_good == "Equally positive and negative" ~ 0,
+                                     TRUE ~ NA_real_)) %>%
+   mutate(us_china_power_counter = case_when(us_china_power_counter == "Undertake friendly cooperation and engagement with China" ~ 0,
+                                     us_china_power_counter == "Actively work to limit the growth of China's power" ~ 1,
+                                     TRUE ~ NA_real_)) %>%
+  mutate(us_asia_policy = case_when(us_asia_policy == "Building a new partnership with China, even if this might diminish our relations with our traditional allies" ~ 0,
+                                     us_asia_policy == "Building up our strong relations with traditional allies like South Korea and Japan, even if this might diminish our rel" ~ 1,
+                                     TRUE ~ NA_real_)) %>%
+  mutate(education = case_when(education == "Less than high school" ~ 0,
+                                     education == "High school" ~ 4,
+                                     education == "Some college" ~ 6,
+                                     education == "Bachelor's degree or higher" ~ 10,
+                                     TRUE ~ NA_real_)) %>%
+     mutate(race = case_when(race == "White, Non-Hispanic" ~ "White",
+                                     race == "Black, Non-Hispanic" ~ "Black",
+                                     race == "Other, Non-Hispanic" ~ "Other",
+                                     race == "Hispanic" ~ "Hispanic",
+                                     race == "2+ Races, Non-Hispanic" ~ "Other",
+                                     TRUE ~ NA_character_)) %>%
+       mutate(party_id = case_when(party_id == "Democrat" ~ "Democrat",
+                                     party_id == "Republican" ~ "Republican",
+                                     party_id == "Independent" ~ "Independent",
+                                     TRUE ~ NA_character_)) %>%
+         mutate(gender = case_when(gender == "Male" ~ "Male",
+                                     gender == "Female" ~ "Female",
+                                     TRUE ~ NA_character_)) %>%
+  mutate_at(vars(age, china_temp_therm, media_should_influence, china_influence, media_does_influence), as.numeric)
+
+fourteen.chicago.rivals.glm <- glm(china_us_rivals ~ media_should_influence + education + age + race + party_id + gender, data = chicago_2014, family = "binomial")
+
+summary(fourteen.chicago.rivals.glm)
+
+two.fourteen.chicago.rivals.glm <- glm(china_us_rivals ~ media_does_influence + education + age + race + party_id + gender, data = chicago_2014, family = "binomial")
+
+summary(two.fourteen.chicago.rivals.glm)
+
+fourteen.chicago.economygood.glm <- glm(china_economy_good ~ media_should_influence + education + age + race + party_id + gender, data = chicago_2014, family = "binomial")
+
+summary(fourteen.chicago.economygood.glm)
+
+two.fourteen.chicago.economygood.glm <- glm(china_economy_good ~ media_does_influence + education + age + race + party_id + gender, data = chicago_2014, family = "binomial")
+
+summary(two.fourteen.chicago.economygood.glm)
+
+
+fourteen.chicago.power.glm <- glm(us_china_power_counter ~ media_should_influence + education + age + race + party_id + gender, data = chicago_2014, family = "binomial")
+
+summary(fourteen.chicago.power.glm)
+
+two.fourteen.chicago.power.glm <- glm(us_china_power_counter ~ media_does_influence + education + age + race + party_id + gender, data = chicago_2014, family = "binomial")
+
+summary(two.fourteen.chicago.power.glm)
+
+fourteen.chicago.asiapolicy.glm <- glm(us_asia_policy ~ media_should_influence + education + age + race + party_id + gender, data = chicago_2014, family = "binomial")
+
+summary(fourteen.chicago.asiapolicy.glm)
+
+two.fourteen.chicago.asiapolicy.glm <- glm(us_asia_policy ~ media_does_influence + education + age + race + party_id + gender, data = chicago_2014, family = "binomial")
+
+summary(two.fourteen.chicago.asiapolicy.glm)
+
+fourteen.chicago.temptherm.lm <- lm(china_temp_therm ~ media_should_influence + education + age + race + party_id + gender, data = chicago_2014)
+
+summary(fourteen.chicago.temptherm.lm)
+
+two.fourteen.chicago.temptherm.lm <- lm(china_temp_therm ~ media_does_influence + education + age + race + party_id + gender, data = chicago_2014)
+
+summary(two.fourteen.chicago.temptherm.lm)
+
+fourteen.chicago.influence.lm <- lm(china_influence ~ media_should_influence + education + age + race + party_id + gender, data = chicago_2014)
+
+summary(fourteen.chicago.influence.lm)
+
+two.fourteen.chicago.influence.lm <- lm(china_influence ~ media_does_influence + education + age + race + party_id + gender, data = chicago_2014)
+
+summary(two.fourteen.chicago.influence.lm)
+```
+
+```{r}
+chicago_2012 <- 
+read_sav("2012public.sav") %>%
+  as_factor() %>%
+  select(Q5_3, Q30_2, Q80_2, Q455_2, Q350, Q50_5, PPEDUCAT, PPAGE, PPGENDER, PPETHM, Q1010, Q2_A, Q2_B, Q2_C, Q2_D, Q2_E) %>%
+  rename(Q5_3 = china_growth_threat, Q30_2 = china_invade_taiwan,
+         Q80_2 = china_fair_trade, Q455_2 = us_china_rivals, Q350 = china_policy,
+         Q50_5 = china_influence,
+         PPEDUCAT = education, PPAGE = age, PPGENDER = gender,
+         PPETHM = race, Q1010 = party_id, Q2_A = newspaper_media, Q2_B = radio_media, Q2_C = networktv_media, Q2_D = cabletv_media, Q2_E = onlineblog_media) %>%
+  mutate(year = 2012) %>%
+   mutate(china_growth_threat = case_when(china_growth_threat == "Critical threat" ~ 1,
+                                     china_growth_threat == "Important but not critical threat" ~ 0,
+                                     china_growth_threat == "Not an important threat" ~ 0,
+                                     TRUE ~ NA_real_)) %>%
+   mutate(china_invade_taiwan = case_when(china_invade_taiwan == "Favor" ~ 1,
+                                     china_invade_taiwan == "Oppose" ~ 0,
+                                     TRUE ~ NA_real_)) %>%
+   mutate(china_fair_trade = case_when(china_fair_trade == "Practice fair trade" ~ 0,
+                                     china_fair_trade == "Practice unfair trade" ~ 1,
+                                     TRUE ~ NA_real_)) %>%
+  mutate(us_china_rivals = case_when(us_china_rivals == "Mostly rivals" ~ 1,
+                                     us_china_rivals == "Mostly partners" ~ 0,
+                                     TRUE ~ NA_real_)) %>%
+    mutate(china_policy = case_when(china_policy == "Undertake friednly cooperation and engagement with China" ~ 1,
+                                     china_policy == "Actively work to limit the growth of China's power" ~ 0,
+                                     TRUE ~ NA_real_)) %>%
+  mutate(education = case_when(education == "Less than high school" ~ 0,
+                                     education == "High school" ~ 4,
+                                     education == "Some college" ~ 6,
+                                     education == "Bachelor's degree or higher" ~ 10,
+                                     TRUE ~ NA_real_)) %>%
+     mutate(race = case_when(race == "White, Non-Hispanic" ~ "White",
+                                     race == "Black, Non-Hispanic" ~ "Black",
+                                     race == "Other, Non-Hispanic" ~ "Other",
+                                     race == "Hispanic" ~ "Hispanic",
+                                     race == "2+ Races, Non-Hispanic" ~ "Other",
+                                     TRUE ~ NA_character_)) %>%
+       mutate(party_id = case_when(party_id == "Democrat" ~ "Democrat",
+                                     party_id == "Republican" ~ "Republican",
+                                     party_id == "Independent" ~ "Independent",
+                                     TRUE ~ NA_character_)) %>%
+         mutate(gender = case_when(gender == "Male" ~ "Male",
+                                     gender == "Female" ~ "Female",
+                                     TRUE ~ NA_character_)) %>%
+         mutate(newspaper_media = case_when(newspaper_media == "Almost every day" ~ 8,
+                                     newspaper_media == "About 2-3 times a week" ~ 4,
+                                     newspaper_media == "About once a week" ~ 2,
+                                     newspaper_media == "Less than once a week" ~ 1,
+                                     newspaper_media == "Never" ~ 0,
+                                     TRUE ~ NA_real_)) %>%
+           mutate(radio_media = case_when(radio_media == "Almost every day" ~ 8,
+                                     radio_media == "About 2-3 times a week" ~ 4,
+                                     radio_media == "About once a week" ~ 2,
+                                     radio_media == "Less than once a week" ~ 1,
+                                     radio_media == "Never" ~ 0,
+                                     TRUE ~ NA_real_)) %>%
+             mutate(networktv_media = case_when(networktv_media == "Almost every day" ~ 8,
+                                     networktv_media == "About 2-3 times a week" ~ 4,
+                                     networktv_media == "About once a week" ~ 2,
+                                     networktv_media == "Less than once a week" ~ 1,
+                                     networktv_media == "Never" ~ 0,
+                                     TRUE ~ NA_real_)) %>%
+             mutate(cabletv_media = case_when(cabletv_media == "Almost every day" ~ 8,
+                                     cabletv_media == "About 2-3 times a week" ~ 4,
+                                     cabletv_media == "About once a week" ~ 2,
+                                     cabletv_media == "Less than once a week" ~ 1,
+                                     cabletv_media == "Never" ~ 0,
+                                     TRUE ~ NA_real_)) %>%  
+               mutate(onlineblog_media = case_when(onlineblog_media == "Almost every day" ~ 8,
+                                     onlineblog_media == "About 2-3 times a week" ~ 4,
+                                     onlineblog_media == "About once a week" ~ 2,
+                                     onlineblog_media == "Less than once a week" ~ 1,
+                                     onlineblog_media == "Never" ~ 0,
+                                     TRUE ~ NA_real_)) %>%  
+  mutate_at(vars(age, china_influence), as.numeric)
+
+fourteen.chicago.rivals.glm <- glm(china_us_rivals ~ media_should_influence + education + age + race + party_id + gender, data = chicago_2014, family = "binomial")
+
+summary(fourteen.chicago.rivals.glm)
+
+two.fourteen.chicago.rivals.glm <- glm(china_us_rivals ~ media_does_influence + education + age + race + party_id + gender, data = chicago_2014, family = "binomial")
+
+summary(two.fourteen.chicago.rivals.glm)
+
+fourteen.chicago.economygood.glm <- glm(china_economy_good ~ media_should_influence + education + age + race + party_id + gender, data = chicago_2014, family = "binomial")
+
+summary(fourteen.chicago.economygood.glm)
+
+two.fourteen.chicago.economygood.glm <- glm(china_economy_good ~ media_does_influence + education + age + race + party_id + gender, data = chicago_2014, family = "binomial")
+
+summary(two.fourteen.chicago.economygood.glm)
+
+
+fourteen.chicago.power.glm <- glm(us_china_power_counter ~ media_should_influence + education + age + race + party_id + gender, data = chicago_2014, family = "binomial")
+
+summary(fourteen.chicago.power.glm)
+
+two.fourteen.chicago.power.glm <- glm(us_china_power_counter ~ media_does_influence + education + age + race + party_id + gender, data = chicago_2014, family = "binomial")
+
+summary(two.fourteen.chicago.power.glm)
+
+fourteen.chicago.asiapolicy.glm <- glm(us_asia_policy ~ media_should_influence + education + age + race + party_id + gender, data = chicago_2014, family = "binomial")
+
+summary(fourteen.chicago.asiapolicy.glm)
+
+two.fourteen.chicago.asiapolicy.glm <- glm(us_asia_policy ~ media_does_influence + education + age + race + party_id + gender, data = chicago_2014, family = "binomial")
+
+summary(two.fourteen.chicago.asiapolicy.glm)
+
+fourteen.chicago.temptherm.lm <- lm(china_temp_therm ~ media_should_influence + education + age + race + party_id + gender, data = chicago_2014)
+
+summary(fourteen.chicago.temptherm.lm)
+
+two.fourteen.chicago.temptherm.lm <- lm(china_temp_therm ~ media_does_influence + education + age + race + party_id + gender, data = chicago_2014)
+
+summary(two.fourteen.chicago.temptherm.lm)
+
+fourteen.chicago.influence.lm <- lm(china_influence ~ media_should_influence + education + age + race + party_id + gender, data = chicago_2014)
+
+summary(fourteen.chicago.influence.lm)
+
+two.fourteen.chicago.influence.lm <- lm(china_influence ~ media_does_influence + education + age + race + party_id + gender, data = chicago_2014)
+
+summary(two.fourteen.chicago.influence.lm)
+```
+
+
+
