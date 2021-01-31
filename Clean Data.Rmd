@@ -806,8 +806,8 @@ read_sav("2012public.sav") %>%
   mutate(us_china_rivals = case_when(us_china_rivals == "Mostly rivals" ~ 1,
                                      us_china_rivals == "Mostly partners" ~ 0,
                                      TRUE ~ NA_real_)) %>%
-    mutate(china_policy = case_when(china_policy == "Undertake friednly cooperation and engagement with China" ~ 1,
-                                     china_policy == "Actively work to limit the growth of China's power" ~ 0,
+    mutate(china_policy = case_when(china_policy == "Undertake friendly cooperation and engagement with China" ~ 0,
+                                     china_policy == "Actively work to limit the growth of China's power" ~ 1,
                                      TRUE ~ NA_real_)) %>%
   mutate(education = case_when(education == "Less than high school" ~ 0,
                                      education == "High school" ~ 4,
@@ -859,54 +859,29 @@ read_sav("2012public.sav") %>%
                                      TRUE ~ NA_real_)) %>%  
   mutate_at(vars(age, china_influence), as.numeric)
 
-fourteen.chicago.rivals.glm <- glm(china_us_rivals ~ media_should_influence + education + age + race + party_id + gender, data = chicago_2014, family = "binomial")
+twelve.chicago.growth.glm <- glm(china_growth_threat ~ newspaper_media + radio_media + networktv_media + cabletv_media + onlineblog_media + education + age + race + party_id + gender, data = chicago_2012, family = "binomial")
 
-summary(fourteen.chicago.rivals.glm)
+summary(twelve.chicago.growth.glm)
 
-two.fourteen.chicago.rivals.glm <- glm(china_us_rivals ~ media_does_influence + education + age + race + party_id + gender, data = chicago_2014, family = "binomial")
+twelve.chicago.taiwanwar.glm <- glm(china_invade_taiwan ~ newspaper_media + radio_media + networktv_media + cabletv_media + onlineblog_media + education + age + race + party_id + gender, data = chicago_2012, family = "binomial")
 
-summary(two.fourteen.chicago.rivals.glm)
+summary(twelve.chicago.taiwanwar.glm)
 
-fourteen.chicago.economygood.glm <- glm(china_economy_good ~ media_should_influence + education + age + race + party_id + gender, data = chicago_2014, family = "binomial")
+twelve.chicago.fairtrade.glm <- glm(china_fair_trade ~ newspaper_media + radio_media + networktv_media + cabletv_media + onlineblog_media + education + age + race + party_id + gender, data = chicago_2012, family = "binomial")
 
-summary(fourteen.chicago.economygood.glm)
+summary(twelve.chicago.fairtrade.glm)
 
-two.fourteen.chicago.economygood.glm <- glm(china_economy_good ~ media_does_influence + education + age + race + party_id + gender, data = chicago_2014, family = "binomial")
+twelve.chicago.rivals.glm <- glm(us_china_rivals ~ newspaper_media + radio_media + networktv_media + cabletv_media + onlineblog_media + education + age + race + party_id + gender, data = chicago_2012, family = "binomial")
 
-summary(two.fourteen.chicago.economygood.glm)
+summary(twelve.chicago.rivals.glm)
 
+twelve.chicago.chinapolicy.glm <- glm(china_policy ~ newspaper_media + radio_media + networktv_media + cabletv_media + onlineblog_media + education + age + race + party_id + gender, data = chicago_2012, family = "binomial")
 
-fourteen.chicago.power.glm <- glm(us_china_power_counter ~ media_should_influence + education + age + race + party_id + gender, data = chicago_2014, family = "binomial")
+summary(twelve.chicago.chinapolicy.glm)
 
-summary(fourteen.chicago.power.glm)
+twelve.chicago.chinainfluence.lm <- lm(china_influence ~ newspaper_media + radio_media + networktv_media + cabletv_media + onlineblog_media + education + age + race + party_id + gender, data = chicago_2012)
 
-two.fourteen.chicago.power.glm <- glm(us_china_power_counter ~ media_does_influence + education + age + race + party_id + gender, data = chicago_2014, family = "binomial")
-
-summary(two.fourteen.chicago.power.glm)
-
-fourteen.chicago.asiapolicy.glm <- glm(us_asia_policy ~ media_should_influence + education + age + race + party_id + gender, data = chicago_2014, family = "binomial")
-
-summary(fourteen.chicago.asiapolicy.glm)
-
-two.fourteen.chicago.asiapolicy.glm <- glm(us_asia_policy ~ media_does_influence + education + age + race + party_id + gender, data = chicago_2014, family = "binomial")
-
-summary(two.fourteen.chicago.asiapolicy.glm)
-
-fourteen.chicago.temptherm.lm <- lm(china_temp_therm ~ media_should_influence + education + age + race + party_id + gender, data = chicago_2014)
-
-summary(fourteen.chicago.temptherm.lm)
-
-two.fourteen.chicago.temptherm.lm <- lm(china_temp_therm ~ media_does_influence + education + age + race + party_id + gender, data = chicago_2014)
-
-summary(two.fourteen.chicago.temptherm.lm)
-
-fourteen.chicago.influence.lm <- lm(china_influence ~ media_should_influence + education + age + race + party_id + gender, data = chicago_2014)
-
-summary(fourteen.chicago.influence.lm)
-
-two.fourteen.chicago.influence.lm <- lm(china_influence ~ media_does_influence + education + age + race + party_id + gender, data = chicago_2014)
-
-summary(two.fourteen.chicago.influence.lm)
+summary(twelve.chicago.chinainfluence.lm)
 ```
 
 
